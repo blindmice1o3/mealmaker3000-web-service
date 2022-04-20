@@ -1,12 +1,17 @@
 package com.jackingaming.MealMaker3000WebService;
 
+import com.jackingaming.MealMaker3000WebService.models.menuitems.MenuItem;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 public class ConsumerClient {
@@ -31,17 +36,35 @@ public class ConsumerClient {
         ));
     }
 
-    public ConsumerRecords<Long, String> pollData() {
-        ConsumerRecords<Long, String> consumerRecords = null;
+    public List<MenuItem> pollData() {
+        List<MenuItem> returner = new ArrayList<MenuItem>();
 
         try {
-            // TODO: pollingData
-            consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
+            ConsumerRecords<Long, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
+
+            if (!consumerRecords.isEmpty()) {
+                for (ConsumerRecord<Long, String> record : consumerRecords) {
+                    Long keyNumberOfMenuItemServed = record.key();
+                    String valueMenuItemAsJSONString = record.value();
+                    int partition = record.partition();
+                    long offset = record.offset();
+                    System.out.println("(key: " + keyNumberOfMenuItemServed + "), " +
+                            "(value: " + valueMenuItemAsJSONString + "), " +
+                            "(partition: " + partition + "), " +
+                            "(offset: " + offset + ").");
+
+                    JSONObject menuItemAsJSON = (JSONObject) new JSONTokener(valueMenuItemAsJSONString).nextValue();
+                    MenuItem menuItem = new MenuItem(menuItemAsJSON);
+                    returner.add(menuItem);
+                }
+            } else {
+                System.out.println("ConsumerClient.pollData() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return consumerRecords;
+        return returner;
     }
 
     private static Properties createConfigurationSettingsForConsumer() {
