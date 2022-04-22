@@ -14,9 +14,11 @@ public class ProducerClient {
             "localhost:9092,localhost:9093,localhost:9094";
 
     private int numberOfMenuItemServed;
+    private Long numberOfMealServed;
     private KafkaProducer<Long, String> kafkaProducer;
 
     public ProducerClient() {
+        numberOfMealServed = 0L;
         Properties settings = createConfigurationSettingsForKafkaProducer();
         kafkaProducer = new KafkaProducer<Long, String>(settings);
         attachShutdownBehavior();
@@ -42,6 +44,18 @@ public class ProducerClient {
         ));
     }
 
+    public void sendData(String mealToPostAsJSONString) {
+        Long keyNumberOfMealServed = numberOfMealServed;
+        String valueMealToPostAsJSONString = mealToPostAsJSONString;
+
+        ProducerRecord<Long, String> record = new ProducerRecord<>(TOPIC,
+                keyNumberOfMealServed, valueMealToPostAsJSONString);
+        kafkaProducer.send(record);
+
+        numberOfMealServed++;
+        System.out.println("numberOfMealServed: " + numberOfMealServed);
+    }
+
     public void sendData(MenuItem menuItem) {
         Long keyNumberOfMenuItemServed = Long.valueOf(numberOfMenuItemServed);
         String valueMenuItemAsJSONString = menuItem.toJSON().toString();
@@ -57,20 +71,6 @@ public class ProducerClient {
     public void sendData(List<MenuItem> menuItems) {
         for (MenuItem menuItem : menuItems) {
             sendData(menuItem);
-        }
-    }
-
-    public void sendData(String menuItemsAsJSONStringSeparatedBySpace) {
-        String[] menuItemsAsJSONString = menuItemsAsJSONStringSeparatedBySpace.split("\\s+");
-        for (String menuItemAsJSONString : menuItemsAsJSONString) {
-            Long key = Long.valueOf(numberOfMenuItemServed);
-            String value = menuItemAsJSONString;
-
-            ProducerRecord<Long, String> record = new ProducerRecord<>(TOPIC, key, value);
-            kafkaProducer.send(record);
-
-            numberOfMenuItemServed++;
-            System.out.println("numberOfMenuItemServed: " + numberOfMenuItemServed);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.jackingaming.MealMaker3000WebService;
 
+import com.jackingaming.MealMaker3000WebService.models.Meal;
 import com.jackingaming.MealMaker3000WebService.models.menuitems.MenuItem;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -34,6 +35,35 @@ public class ConsumerClient {
                     kafkaConsumer.close();
                 }
         ));
+    }
+
+    public List<String> pollDataAsMeal() {
+        List<String> returner = new ArrayList<String>();
+
+        try {
+            ConsumerRecords<Long, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
+
+            if (!consumerRecords.isEmpty()) {
+                for (ConsumerRecord<Long, String> record : consumerRecords) {
+                    Long keyNumberOfMealServed = record.key();
+                    String valueMealAsJSONString = record.value();
+                    int partition = record.partition();
+                    long offset = record.offset();
+                    System.out.println("(key: " + keyNumberOfMealServed + "), " +
+                            "(value: " + valueMealAsJSONString + "), " +
+                            "(partition: " + partition + "), " +
+                            "(offset: " + offset + ").");
+
+                    returner.add(valueMealAsJSONString);
+                }
+            } else {
+                System.out.println("ConsumerClient.pollData() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return returner;
     }
 
     public List<MenuItem> pollData() {

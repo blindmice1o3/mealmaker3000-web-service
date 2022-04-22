@@ -1,5 +1,6 @@
 package com.jackingaming.MealMaker3000WebService;
 
+import com.jackingaming.MealMaker3000WebService.models.Meal;
 import com.jackingaming.MealMaker3000WebService.models.menuitems.Bread;
 import com.jackingaming.MealMaker3000WebService.models.menuitems.MenuItem;
 import org.springframework.http.MediaType;
@@ -18,6 +19,18 @@ public class KafkaController {
         consumerClient = new ConsumerClient();
     }
 
+    @PostMapping(value = "/publish_jsonmeal")
+    public void sendMealToKafkaTopic(@RequestParam("meal") String mealToPostAsJSONString) {
+        producerClient.sendData(mealToPostAsJSONString);
+        System.out.println("PUBLISHED | " + mealToPostAsJSONString);
+    }
+
+    @GetMapping(value = "/receive_meal_as_jsonarray", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<String> getMealAsJSONArray() {
+        List<String> returner = consumerClient.pollDataAsMeal();
+        return returner;
+    }
+
     @PostMapping(value = "/publish_jsonobject")
     public void sendMenuItemToKafkaTopic(@RequestBody MenuItem menuItemToPost) {
         producerClient.sendData(menuItemToPost);
@@ -28,12 +41,6 @@ public class KafkaController {
     public void sendMenuItemsToKafkaTopic(@RequestBody List<MenuItem> menuItemsToPost) {
         producerClient.sendData(menuItemsToPost);
         System.out.println("PUBLISHED | " + menuItemsToPost.toString());
-    }
-
-    @PostMapping(value = "/publish")
-    public void sendMessageToKafkaTopic(@RequestParam("meal") String menuItemsAsJSONStringSeparatedBySpace) {
-        producerClient.sendData(menuItemsAsJSONStringSeparatedBySpace);
-        System.out.println("PUBLISHED | " + menuItemsAsJSONStringSeparatedBySpace);
     }
 
     @GetMapping(value = "/receive_jsonarray", produces = MediaType.APPLICATION_JSON_VALUE)
