@@ -1,11 +1,9 @@
 package com.jackingaming.MealMaker3000WebService;
 
-import com.jackingaming.MealMaker3000WebService.models.menuitems.MenuItem;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import java.util.List;
 import java.util.Properties;
 
 public class ProducerClient {
@@ -13,7 +11,6 @@ public class ProducerClient {
     private final String BOOTSTRAP_SERVERS =
             "localhost:9092,localhost:9093,localhost:9094";
 
-    private int numberOfMenuItemServed;
     private Long numberOfMealServed;
     private KafkaProducer<Long, String> kafkaProducer;
 
@@ -54,23 +51,5 @@ public class ProducerClient {
 
         numberOfMealServed++;
         System.out.println("numberOfMealServed: " + numberOfMealServed);
-    }
-
-    public void sendData(MenuItem menuItem) {
-        Long keyNumberOfMenuItemServed = Long.valueOf(numberOfMenuItemServed);
-        String valueMenuItemAsJSONString = menuItem.toJSON().toString();
-
-        ProducerRecord<Long, String> record = new ProducerRecord<>(TOPIC,
-                keyNumberOfMenuItemServed, valueMenuItemAsJSONString);
-        kafkaProducer.send(record);
-
-        numberOfMenuItemServed++;
-        System.out.println("numberOfMenuItemServed: " + numberOfMenuItemServed);
-    }
-
-    public void sendData(List<MenuItem> menuItems) {
-        for (MenuItem menuItem : menuItems) {
-            sendData(menuItem);
-        }
     }
 }

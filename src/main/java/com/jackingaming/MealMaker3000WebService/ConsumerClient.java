@@ -1,13 +1,9 @@
 package com.jackingaming.MealMaker3000WebService;
 
-import com.jackingaming.MealMaker3000WebService.models.Meal;
-import com.jackingaming.MealMaker3000WebService.models.menuitems.MenuItem;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -37,8 +33,8 @@ public class ConsumerClient {
         ));
     }
 
-    public List<String> pollDataAsMeal() {
-        List<String> returner = new ArrayList<String>();
+    public List<String> pollTopicForNewMeals() {
+        List<String> newMealsAsJSONString = new ArrayList<String>();
 
         try {
             ConsumerRecords<Long, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
@@ -54,47 +50,16 @@ public class ConsumerClient {
                             "(partition: " + partition + "), " +
                             "(offset: " + offset + ").");
 
-                    returner.add(valueMealAsJSONString);
+                    newMealsAsJSONString.add(valueMealAsJSONString);
                 }
             } else {
-                System.out.println("ConsumerClient.pollData() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
+                System.out.println("ConsumerClient.pollTopicForNewMeals() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return returner;
-    }
-
-    public List<MenuItem> pollData() {
-        List<MenuItem> returner = new ArrayList<MenuItem>();
-
-        try {
-            ConsumerRecords<Long, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
-
-            if (!consumerRecords.isEmpty()) {
-                for (ConsumerRecord<Long, String> record : consumerRecords) {
-                    Long keyNumberOfMenuItemServed = record.key();
-                    String valueMenuItemAsJSONString = record.value();
-                    int partition = record.partition();
-                    long offset = record.offset();
-                    System.out.println("(key: " + keyNumberOfMenuItemServed + "), " +
-                            "(value: " + valueMenuItemAsJSONString + "), " +
-                            "(partition: " + partition + "), " +
-                            "(offset: " + offset + ").");
-
-                    JSONObject menuItemAsJSON = (JSONObject) new JSONTokener(valueMenuItemAsJSONString).nextValue();
-                    MenuItem menuItem = new MenuItem(menuItemAsJSON);
-                    returner.add(menuItem);
-                }
-            } else {
-                System.out.println("ConsumerClient.pollData() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return returner;
+        return newMealsAsJSONString;
     }
 
     private static Properties createConfigurationSettingsForConsumer() {
