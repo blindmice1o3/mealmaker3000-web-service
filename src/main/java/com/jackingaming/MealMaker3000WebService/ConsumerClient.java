@@ -4,12 +4,11 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class ConsumerClient {
     private final static String TOPIC = "meal-to-prepare-topic";
@@ -34,8 +33,8 @@ public class ConsumerClient {
     }
 
     public List<String> pollTopicForNewMeals() {
-        List<String> newMealsAsJSONString = new ArrayList<String>();
-
+//        List<String> newMealsAsJSONString = new ArrayList<String>();
+        List<String> recordOfNewMealsAsJSONString = new ArrayList<String>();
         try {
             ConsumerRecords<Long, String> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(100));
 
@@ -50,7 +49,16 @@ public class ConsumerClient {
                             "(partition: " + partition + "), " +
                             "(offset: " + offset + ").");
 
-                    newMealsAsJSONString.add(valueMealAsJSONString);
+                    Map<String, String> recordOfNewMeal = new HashMap<String, String>();
+                    recordOfNewMeal.put("key", keyNumberOfMealServed.toString());
+                    recordOfNewMeal.put("value", valueMealAsJSONString);
+                    recordOfNewMeal.put("partition", Integer.toString(partition));
+                    recordOfNewMeal.put("offset", Long.toString(offset));
+
+                    JSONObject recordOfNewMealAsJSON = new JSONObject(recordOfNewMeal);
+                    recordOfNewMealsAsJSONString.add(recordOfNewMealAsJSON.toString());
+//                    recordOfNewMeals.add(jsonObject);
+//                    newMealsAsJSONString.add(valueMealAsJSONString);
                 }
             } else {
                 System.out.println("ConsumerClient.pollTopicForNewMeals() consumerRecords.isEmpty(): " + consumerRecords.isEmpty());
@@ -59,7 +67,8 @@ public class ConsumerClient {
             e.printStackTrace();
         }
 
-        return newMealsAsJSONString;
+//        return newMealsAsJSONString;
+        return recordOfNewMealsAsJSONString;
     }
 
     private static Properties createConfigurationSettingsForConsumer() {
